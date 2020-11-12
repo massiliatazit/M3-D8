@@ -139,6 +139,12 @@
                   type="submit"
                   value="Submit event"
                 >
+                  <span
+                    class="spinner-border spinner-border-sm d-none"
+                    role="status"
+                    aria-hidden="true"
+                    id="loadingSpinner"
+                  ></span>
                   Submit event
                 </button>
               </div>
@@ -148,12 +154,29 @@
       </div>
     </div>
     <script>
+      const url = "https://striveschool-api.herokuapp.com/api/product/";
+      window.onload = async () => {
+        let urlParams = new URLSearchParams(window.location.search);
+        id = urlParams.get("id");
+        if (id) {
+          let response = await fetch(url + id); // contacting the endpoint for a single event
+          let product = await response.json(); // transforming the response body in an usable object, asyncronous operation!
+          document.getElementById("name").value = Product.name;
+          document.getElementById("description").value = product.description;
+          document.getElementById("imageUrl").value = product.imageUrl;
+          document.getElementById("price").value = product.price;
+          document.getElementById("brand").value = product.brand;
+        }
+      };
+
       const handleSubmit = (e) => {
         e.preventDefault(); // preventing the default browser event handling
         submitProductInfo();
       };
 
       const submitProductInfo = async () => {
+        let spinner = document.querySelector("#loadingSpinner");
+        spinner.classList.toggle("d-none"); // showing the spinner
         // gathering the data from the form, field by field
         let myProduct = {
           name: document.querySelector("#name").value,
@@ -164,9 +187,21 @@
           imageUrl: document.querySelector("#imageUrl").value,
         };
         try {
-          let response = await fetch(
-            " https://striveschool-api.herokuapp.com/api/product/",
-            {
+          let response;
+
+          if (id) {
+            response = await fetch(url + id, {
+              method: "PUT", // declaring the CRUD method
+              body: JSON.stringify(myProduct), // make the JS object a string in order to send it
+              headers: new Headers({
+                // declare the content type to convert it back to an object
+                "Content-Type": "application/json",
+                Authorization:
+                  "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1ZmFiZTRhMjRiY2RlMTAwMTc2MTZhYjAiLCJpYXQiOjE2MDUxMDA3MDcsImV4cCI6MTYwNjMxMDMwN30.rccqHyMdYa4XJNV6tpobEWZ7oeR0YRuKZSwDk7zv8VM",
+              }),
+            });
+          } else {
+            response = await fetch(url, {
               method: "POST", // declaring the CRUD method
               body: JSON.stringify(myProduct), // make the JS object a string in order to send it
               headers: new Headers({
@@ -175,12 +210,15 @@
                 Authorization:
                   "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1ZmFiZTRhMjRiY2RlMTAwMTc2MTZhYjAiLCJpYXQiOjE2MDUxMDA3MDcsImV4cCI6MTYwNjMxMDMwN30.rccqHyMdYa4XJNV6tpobEWZ7oeR0YRuKZSwDk7zv8VM",
               }),
-            }
-          );
+            });
+          }
           if (response.ok) {
+            spinner.classList.toggle("d-none"); // hiding the spinner
+            alert(`product ${id ? "updated" : "created"} successfully`);
             alert("product sent to the API");
             location.assign("index.html");
           } else {
+            spinner.classList.toggle("d-none");
             alert("Check what is wrong");
           }
         } catch (error) {

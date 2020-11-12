@@ -105,7 +105,64 @@
         <div class="row" id="products"></div>
       </div>
     </div>
+    <div class="modal" id="myModal">
+      <div class="modal-dialog">
+        <div class="modal-content">
+        
+          <!-- Modal Header -->
+          <div class="modal-header">
+            <h4 class="modal-title"></h4>
+            <button type="button" class="close" data-dismiss="modal" >&times;</button>
+          </div>
+          
+          <!-- Modal body -->
+          <div class="modal-body">
+           
+          </div>
+          
+          <!-- Modal footer -->
+          <div class="modal-footer">
+            <button id="update-product" type="button" class="btn btn-secondary" data-dismiss="modal" >EDIT</button>
+            <button  id="delete-product" type="button" class="btn btn-danger" data-dismiss="modal" >DELETE</button>
+          </div>
+          
+        </div>
+      </div>
+    </div>
+    
+  </div>
+  
     <script>
+      let products = []
+      
+
+      const handleDelete = async (id) => {
+        try {
+          const response = await fetch("https://striveschool-api.herokuapp.com/api/product/"+ id, { 
+            method: "DELETE" ,
+          
+          headers: new Headers({
+               
+                Authorization:
+                  "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1ZmFiZTRhMjRiY2RlMTAwMTc2MTZhYjAiLCJpYXQiOjE2MDUxMDA3MDcsImV4cCI6MTYwNjMxMDMwN30.rccqHyMdYa4XJNV6tpobEWZ7oeR0YRuKZSwDk7zv8VM",
+              }),
+          
+          });
+          if (response.ok) {
+            // checking the ok property which stores the successful result of the operation
+            alert("Event deleted successfully");
+            location.assign("index.html");
+          } else {
+            alert("Something went wrong!");
+          }
+        } catch (error) {
+          console.log(error);
+        }
+      };
+
+      const handleEdit = (id) => {
+        location.href = "backoffice.html?id=" + id;
+      };
       window.onload = async () => {
         const row = document.querySelector("#products");
         try {
@@ -119,27 +176,62 @@
             }
           );
           let products_data = await response.json();
+          products=products_data
           console.log(products_data);
           if (response.ok) {
             products_data.forEach((product) => {
               let col = document.createElement("div");
-              col.className = "col col-sm-6 col-md-3 mt-4 ";
+              col.className = "col col-sm-6 col-md-4 col-lg-3 mt-4 ";
               col.style = col.innerHTML = `<div class="card shadow-sm"  >
-        <img src="${product.imageUrl}" class="card-img-top" alt="..." height="200" width ="100%">
-        <div class="card-body ">
-          <h5 class="card-title">${product.name}</h5>
-          <p class="card-text">${product.description}</p>
-        </div>
-        <ul class="list-group list-group-flush">
-          <li class="list-group-item">${product.brand}</li>
-          <li class="list-group-item">${product.price}$</li>
+                        <img src="${product.imageUrl}" class="card-img-top" alt="..." height="200" width ="100%">
+                        <div class="card-body ">
+                          <h5 class="card-title">${product.name}</h5>
+                          <p class="card-text">${product.description}</p>
+                        </div>
+                        <ul class="list-group list-group-flush">
+                          <li class="list-group-item">${product.brand}</li>
+                          <li class="list-group-item">${product.price}$</li>
+                          <span>
+                                  <button class="btn btn-light modal-btn" id="${product._id}">VIEW DETAILS</button>
+                                </span>
 
-        </ul>
+                        </ul>
 
-      </div>`;
+                      </div>`;
 
               row.appendChild(col);
             });
+            const allModalButtons = document.querySelectorAll(".modal-btn")
+            allModalButtons.forEach(btn=>{
+              btn.onclick=function(event){
+                  const id = event.currentTarget.id;
+                  const product = products.find(product=>product._id===id)
+                 
+                  document.querySelector('.modal-title').innerHTML=`${product.name}`;
+                  document.querySelector('.modal-body').innerHTML=` <div class="row">
+                    <div class="col-5">
+                      <img src="${product.imageUrl}"
+                        class="img-fluid" alt="">
+                    </div>
+
+                    <div class="col-7">
+                      <p><strong>${product.price}</strong></p>
+                      <p>${product.description}</p>
+                      
+
+                    </div>
+                  </div>`
+                  $('#myModal').modal('toggle');
+                  const deleteButton = document.querySelector("#delete-product")
+                  deleteButton.onclick=function(){
+                    handleDelete(id)
+                  }
+                  const updateButton = document.querySelector("#update-product")
+                  updateButton.onclick=function(){
+                    handleEdit(id)
+                  }
+              }
+            })
           } else {
             currentEvents.innerHTML = "<h5>No planned products</h5>";
           }
